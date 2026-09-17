@@ -245,16 +245,17 @@ public class UserServiceImpl implements UserService {
             throw new UserHandler(ErrorStatus._LOGIN_FAILED);
         }
 
+        if(user.getStatus() == UserStatus.INACTIVE) {
+            throw new UserHandler(ErrorStatus._USER_INACTIVE);
+        }
+
+        if(user.getStatus() == UserStatus.TEMP) {
+            throw new UserHandler(ErrorStatus._USER_PROFILE_INCOMPLETE);
+        }
+
         String email = authAccountRepository.findByUserIdAndProvider(userId, Provider.GENERAL)
                 .map(AuthAccount::getEmail)
                 .orElseThrow(() -> new UserHandler(ErrorStatus._USER_NOT_FOUND));
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                email, null,
-                Collections.singleton(() -> user.getRole().name())
-        );
-
-
 
         String accessToken = jwtTokenProvider.createAccessToken(email, Provider.GENERAL.name());
         String refreshToken = jwtTokenProvider.createRefreshToken(email);
